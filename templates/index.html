@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="pt-br" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VYA Manager | Gestão Inteligente para Varejo</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vanta/0.5.24/vanta.waves.min.js"></script>
+    
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            try {
+                VANTA.NET({ el: "#funcionalidades", mouseControls: true, touchControls: true, gyroControls: false, minHeight: 200.00, minWidth: 200.00, scale: 1, scaleMobile: 1.00, color: 0x6c3fff, points: 13.00, maxDistance: 26.00, spacing: 17.00 });
+            } catch (e) {
+                console.warn("Vanta JS não pôde ser iniciado:", e);
+            }
+        });
+        
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1', // Indigo principal
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            900: '#312e81',
+                        },
+                        dark: {
+                            bg: '#0f172a',     // Slate 900+
+                            surface: '#1e293b', // Slate 800
+                            border: '#334155'   // Slate 700
+                        }
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'blob': 'blob 7s infinite',
+                        'spin-slow': 'spin 12s linear infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-20px)' },
+                        },
+                        blob: {
+                            '0%': { transform: 'translate(0px, 0px) scale(1)' },
+                            '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+                            '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+                            '100%': { transform: 'translate(0px, 0px) scale(1)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Efeitos Customizados */
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            overflow-x: hidden;
+        }
+
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .text-gradient {
+            background: linear-gradient(to right, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .bg-grid-pattern {
+            background-image: linear-gradient(to right, #334155 1px, transparent 1px),
+                              linear-gradient(to bottom, #334155 1px, transparent 1px);
+            background-size: 40px 40px;
+            mask-image: linear-gradient(to bottom, transparent, black, transparent);
+            -webkit-mask-image: linear-gradient(to bottom, transparent 5%, black 40%, black 70%, transparent 95%);
+            opacity: 0.1;
+        }
+        
+        /* Utilitário para centralizar absolutamente */
+        .center-absolute {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        /* Scrollbar personalizada */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #4f46e5; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #4338ca; }
+    </style>
+</head>
+<body class="antialiased selection:bg-brand-500 selection:text-white">
+
+    <div id="loginModal" class="fixed inset-0 z-[100] hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-dark-bg/80 backdrop-blur-sm transition-opacity" aria-hidden="true" onclick="toggleLoginModal()"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            
+            <div class="relative inline-block align-bottom glass-panel rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full border border-dark-border">
+                <div class="px-4 pt-5 pb-4 sm:p-6 sm:pb-4 relative">
+                    <button onclick="toggleLoginModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                    <div class="sm:flex sm:items-start justify-center">
+                        <div class="mt-3 text-center sm:mt-0 sm:text-left w-full">
+                            <h3 class="text-2xl leading-6 font-bold text-white text-center mb-6" id="modal-title">
+                                Acessar Painel
+                            </h3>
+                            <div class="mt-2 space-y-4">
+                                <div>
+                                    <label for="email" class="block text-sm font-medium text-gray-300 mb-1">Usuário</label>
+                                    <div class="relative rounded-md shadow-sm">
+                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <i class="fas fa-user text-gray-500"></i>
+                                        </div>
+                                        <input type="text" name="email" id="email" class="bg-dark-bg border border-dark-border text-white focus:ring-brand-500 focus:border-brand-500 block w-full pl-10 sm:text-sm rounded-lg py-3 outline-none" placeholder="Usuário">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="password" class="block text-sm font-medium text-gray-300 mb-1">Senha</label>
+                                    <div class="relative rounded-md shadow-sm">
+                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <i class="fas fa-lock text-gray-500"></i>
+                                        </div>
+                                        <input type="password" name="password" id="password" class="bg-dark-bg border border-dark-border text-white focus:ring-brand-500 focus:border-brand-500 block w-full pl-10 sm:text-sm rounded-lg py-3 outline-none" placeholder="••••••••">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" onclick="realizarLogin()" class="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-3 bg-brand-600 text-base font-medium text-white hover:bg-brand-700 focus:outline-none sm:ml-3 sm:text-sm transition-all">
+                        Entrar no Sistema
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="fixed inset-0 z-0 pointer-events-none">
+        <div class="absolute inset-0 bg-grid-pattern"></div>
+        <div class="absolute top-0 -left-4 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+        <div class="absolute top-0 -right-4 w-72 h-72 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+        <div class="absolute -bottom-8 left-20 w-72 h-72 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
+    </div>
+
+    <nav class="fixed w-full z-50 transition-all duration-300 glass-panel border-b border-dark-border" id="navbar">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <div class="flex-shrink-0 relative overflow-hidden">
+                    <img src="{{ url_for('static', filename='brand.png') }}" 
+                        alt="VYA Manager Logo" 
+                        class="h-10 w-auto object-contain hover:opacity-90 transition-opacity">
+                </div>
+                
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-center space-x-6">
+                        <a href="#funcionalidades" class="hover:text-brand-400 transition-colors px-3 py-2 rounded-md text-sm font-medium">Funcionalidades</a>
+                        <a href="#dashboards" class="hover:text-brand-400 transition-colors px-3 py-2 rounded-md text-sm font-medium">Dashboards</a>
+                        <a href="#integracao" class="hover:text-brand-400 transition-colors px-3 py-2 rounded-md text-sm font-medium">Integrações</a>
+                        
+                        <div class="flex items-center gap-4 pl-4 border-l border-dark-border">
+                            <button onclick="toggleLoginModal()" class="text-white hover:text-brand-400 transition-colors text-sm font-medium flex items-center gap-2">
+                                <i class="fas fa-sign-in-alt"></i> Painel de Controle
+                            </button>
+                            <a href="#contato" class="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2.5 rounded-full text-sm font-medium transition-all shadow-lg shadow-brand-600/30 hover:shadow-brand-600/50">
+                                Solicitar Demo
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="-mr-2 flex md:hidden">
+                    <button type="button" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <section class="relative z-10 pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative text-center">
+            
+            <div data-aos="fade-up" data-aos-duration="1000">
+                <span id="dynamic-changelog" class="inline-block py-1 px-3 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-400 text-sm font-semibold mb-6 animate-pulse-slow">
+                    <i class="fas fa-circle-notch fa-spin mr-2"></i> Carregando versão atual...
+                </span>
+                
+                <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight mb-8 leading-tight">
+                    O Controle Total do Seu <br>
+                    <span class="text-gradient">Varejo em Tempo Real</span>
+                </h1>
+                <p class="mt-4 max-w-2xl mx-auto text-xl text-gray-400 mb-10">
+                    Gerencie estoque, vendas, faturamento e equipes de múltiplas filiais em uma única plataforma fluida, segura e inteligente.
+                </p>
+                <div class="flex flex-col sm:flex-row justify-center gap-4">
+                    <a href="#contato" class="px-8 py-4 bg-brand-600 text-white rounded-xl font-bold text-lg hover:bg-brand-700 transition-all shadow-xl shadow-brand-600/25 hover:shadow-brand-600/40 flex items-center justify-center gap-2">
+                        <i class="fas fa-rocket"></i> Começar Agora
+                    </a>
+                    <a href="#dashboards" class="px-8 py-4 glass-panel text-white rounded-xl font-bold text-lg hover:bg-white/5 transition-all flex items-center justify-center gap-2">
+                        <i class="fas fa-play-circle"></i> Ver Dashboards
+                    </a>
+                </div>
+            </div>
+
+            <div class="mt-20 relative max-w-5xl mx-auto" data-aos="fade-up" data-aos-delay="200" data-aos-duration="1200">
+                <div class="absolute -inset-1 bg-gradient-to-r from-brand-500 to-purple-600 rounded-2xl blur opacity-30 animate-float"></div>
+                
+                <div class="relative glass-panel rounded-xl border border-gray-700 shadow-2xl overflow-hidden">
+                    <div class="bg-gray-800/80 px-4 py-3 border-b border-gray-700 flex items-center gap-2">
+                        <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                        <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                        <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                        <div class="ml-4 bg-gray-900/50 px-3 py-1 rounded-md text-xs text-gray-400 font-mono flex-1 text-center">vyamanager.app/dashboard</div>
+                    </div>
+                    
+                    <div class="p-6 bg-dark-bg grid grid-cols-1 md:grid-cols-4 gap-6 text-left">
+                        <div class="hidden md:flex flex-col gap-4 text-gray-400 border-r border-gray-800 pr-6">
+                            <div class="flex items-center gap-3 text-brand-500 font-bold bg-brand-500/10 p-2 rounded"><i class="fas fa-home"></i> Visão Geral</div>
+                            <div class="flex items-center gap-3 hover:text-white transition"><i class="fas fa-chart-pie"></i> Relatórios</div>
+                            <div class="flex items-center gap-3 hover:text-white transition"><i class="fas fa-box-open"></i> Produtos</div>
+                            <div class="flex items-center gap-3 hover:text-white transition"><i class="fas fa-users"></i> Vendedores</div>
+                            <div class="flex items-center gap-3 hover:text-white transition"><i class="fas fa-store"></i> Franquias</div>
+                        </div>
+
+                        <div class="col-span-3 space-y-6">
+                            <div class="grid grid-cols-3 gap-4">
+                                <div class="bg-dark-surface p-4 rounded-lg border border-dark-border">
+                                    <p class="text-xs text-gray-400 uppercase">Faturamento Hoje</p>
+                                    <p class="text-2xl font-bold text-white mt-1">R$ 42.590,00</p>
+                                    <span class="text-xs text-green-400 flex items-center gap-1"><i class="fas fa-arrow-up"></i> 12% vs Ontem</span>
+                                </div>
+                                <div class="bg-dark-surface p-4 rounded-lg border border-dark-border">
+                                    <p class="text-xs text-gray-400 uppercase">Pedidos</p>
+                                    <p class="text-2xl font-bold text-white mt-1">158</p>
+                                    <span class="text-xs text-brand-400">Em tempo real</span>
+                                </div>
+                                <div class="bg-dark-surface p-4 rounded-lg border border-dark-border relative overflow-hidden">
+                                    <div class="absolute right-0 top-0 p-2 text-yellow-500/20"><i class="fas fa-exclamation-triangle text-4xl"></i></div>
+                                    <p class="text-xs text-gray-400 uppercase">Alertas Estoque</p>
+                                    <p class="text-2xl font-bold text-yellow-500 mt-1">5 Produtos</p>
+                                    <span class="text-xs text-gray-500">Reposição necessária</span>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-dark-surface p-4 rounded-lg border border-dark-border h-48 flex items-end justify-between px-2 gap-2 relative">
+                                <p class="absolute top-4 left-4 text-sm font-semibold text-gray-300">Desempenho Semanal</p>
+                                <div class="w-full bg-brand-500/20 hover:bg-brand-500/40 transition-all rounded-t" style="height: 40%"></div>
+                                <div class="w-full bg-brand-500/30 hover:bg-brand-500/50 transition-all rounded-t" style="height: 65%"></div>
+                                <div class="w-full bg-brand-500/40 hover:bg-brand-500/60 transition-all rounded-t" style="height: 50%"></div>
+                                <div class="w-full bg-brand-500/50 hover:bg-brand-500/70 transition-all rounded-t" style="height: 85%"></div>
+                                <div class="w-full bg-brand-500/60 hover:bg-brand-500/80 transition-all rounded-t" style="height: 70%"></div>
+                                <div class="w-full bg-brand-500/80 hover:bg-brand-500 transition-all rounded-t" style="height: 90%"></div>
+                                <div class="w-full bg-brand-500 hover:bg-brand-400 transition-all rounded-t shadow-[0_0_15px_rgba(99,102,241,0.5)]" style="height: 95%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="funcionalidades" class="py-20 relative z-10 bg-dark-bg/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-16" data-aos="fade-up">
+                <h2 class="text-brand-500 font-semibold tracking-wide uppercase text-sm mb-2">Poderoso & Completo</h2>
+                <h3 class="text-3xl md:text-4xl font-bold text-white mb-4">Tudo o que sua loja precisa para crescer</h3>
+                <p class="text-gray-400">Do controle de estoque à análise preditiva, o VYA Manager centraliza suas operações.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="glass-panel p-8 rounded-2xl border border-dark-border hover:border-brand-500/50 transition-all group" data-aos="fade-up" data-aos-delay="100">
+                    <div class="w-14 h-14 bg-blue-500/10 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                        <i class="fas fa-sitemap text-2xl text-blue-400"></i>
+                    </div>
+                    <h4 class="text-xl font-bold text-white mb-3">Multi-Lojas e Franquias</h4>
+                    <p class="text-gray-400 leading-relaxed">
+                        Gerencie Matriz, Central e Filiais em um único lugar. Alterne entre visões consolidadas ou específicas por loja com um clique.
+                    </p>
+                </div>
+
+                <div class="glass-panel p-8 rounded-2xl border border-dark-border hover:border-brand-500/50 transition-all group" data-aos="fade-up" data-aos-delay="200">
+                    <div class="w-14 h-14 bg-pink-500/10 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                        <i class="fas fa-robot text-2xl text-pink-400"></i>
+                    </div>
+                    <h4 class="text-xl font-bold text-white mb-3">Assistente IA Integrado</h4>
+                    <p class="text-gray-400 leading-relaxed">
+                        Nossa IA analisa comportamentos, sugere reposição de estoque e gera insights automáticos sobre tendências de vendas.
+                    </p>
+                </div>
+
+                <div class="glass-panel p-8 rounded-2xl border border-dark-border hover:border-brand-500/50 transition-all group" data-aos="fade-up" data-aos-delay="300">
+                    <div class="w-14 h-14 bg-brand-500/10 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                        <i class="fas fa-cash-register text-2xl text-brand-400"></i>
+                    </div>
+                    <h4 class="text-xl font-bold text-white mb-3">Frente de Caixa (PDV)</h4>
+                    <p class="text-gray-400 leading-relaxed">
+                        Interface de caixa otimizada, com suporte a múltiplas formas de transação e integração direta com o estoque.
+                    </p>
+                </div>
+
+                <div class="glass-panel p-8 rounded-2xl border border-dark-border hover:border-brand-500/50 transition-all group" data-aos="fade-up" data-aos-delay="400">
+                    <div class="w-14 h-14 bg-yellow-500/10 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                        <i class="fas fa-boxes text-2xl text-yellow-400"></i>
+                    </div>
+                    <h4 class="text-xl font-bold text-white mb-3">Estoque Inteligente</h4>
+                    <p class="text-gray-400 leading-relaxed">
+                        Previsão de ruptura, análise de cobertura de estoque e sugestão automática de pedidos de compra baseada no giro.
+                    </p>
+                </div>
+
+                <div class="glass-panel p-8 rounded-2xl border border-dark-border hover:border-brand-500/50 transition-all group" data-aos="fade-up" data-aos-delay="500">
+                    <div class="w-14 h-14 bg-green-500/10 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                        <i class="fab fa-whatsapp text-2xl text-green-400"></i>
+                    </div>
+                    <h4 class="text-xl font-bold text-white mb-3">Notificações WhatsApp</h4>
+                    <p class="text-gray-400 leading-relaxed">
+                        Receba alertas críticos, resumos diários e feedbacks diretamente no seu WhatsApp. Mantenha-se informado onde estiver.
+                    </p>
+                </div>
+
+                <div class="glass-panel p-8 rounded-2xl border border-dark-border hover:border-brand-500/50 transition-all group" data-aos="fade-up" data-aos-delay="600">
+                    <div class="w-14 h-14 bg-cyan-500/10 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                        <i class="fas fa-user-tag text-2xl text-cyan-400"></i>
+                    </div>
+                    <h4 class="text-xl font-bold text-white mb-3">Performance de Equipe</h4>
+                    <p class="text-gray-400 leading-relaxed">
+                        Ranking de vendedores, análise de ticket médio, PA (Peças por Atendimento) e metas individuais em tempo real.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="dashboards" class="py-24 bg-dark-surface border-y border-dark-border overflow-hidden relative">
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row items-center gap-16 relative z-10">
+             <div class="lg:w-1/2 order-2 lg:order-1" data-aos="fade-right">
+                <h2 class="text-brand-500 font-semibold tracking-wide uppercase text-sm mb-2">Visualização Clara</h2>
+                <h3 class="text-3xl md:text-4xl font-bold text-white mb-6">Dashboards que contam a história da sua loja.</h3>
+                <p class="text-gray-400 text-lg mb-8 leading-relaxed">
+                    Transforme milhares de linhas de transações SQL em insights visuais instantâneos. O VYA Manager traduz dados complexos em decisões simples.
+                </p>
+                <ul class="space-y-4">
+                    <li class="flex items-start gap-3">
+                        <i class="fas fa-check-circle text-brand-500 mt-1"></i>
+                        <span class="text-gray-300">Acompanhamento de "Pacing" de vendas vs. metas em tempo real.</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <i class="fas fa-check-circle text-brand-500 mt-1"></i>
+                        <span class="text-gray-300">Análise de Curva ABC de produtos e performance de fornecedores.</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <i class="fas fa-check-circle text-brand-500 mt-1"></i>
+                        <span class="text-gray-300">Visão unificada de estoque entre Matriz e Filiais.</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="lg:w-1/2 order-1 lg:order-2" data-aos="fade-left">
+                <div class="relative">
+                    <div class="absolute -inset-4 bg-brand-500/20 rounded-full blur-3xl animate-pulse-slow"></div>
+                    <div class="relative glass-panel rounded-2xl p-6 border border-dark-border shadow-2xl">
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between p-4 bg-dark-bg/80 rounded-lg border border-dark-border hover:border-brand-500 transition-all cursor-pointer">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-400/20 to-blue-600/20 text-blue-400 flex items-center justify-center"><i class="fas fa-tshirt text-xl"></i></div>
+                                    <div>
+                                        <p class="text-base font-bold text-white">Camiseta Básica Algodão</p>
+                                        <div class="flex items-center gap-2 text-xs text-gray-400 mt-1">
+                                            <span>Ref: 001023</span>
+                                            <span class="w-1 h-1 rounded-full bg-gray-600"></span>
+                                            <span>Loja Centro</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-lg font-extrabold text-green-400">+120 Vendas</p>
+                                    <p class="text-xs text-gray-500">Hoje</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between p-4 bg-dark-bg/80 rounded-lg border border-red-500/30 hover:border-red-500 transition-all cursor-pointer">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-red-400/20 to-red-600/20 text-red-400 flex items-center justify-center"><i class="fas fa-shoe-prints text-xl"></i></div>
+                                    <div>
+                                        <p class="text-base font-bold text-white">Tênis Runner Pro</p>
+                                        <div class="flex items-center gap-2 text-xs text-gray-400 mt-1">
+                                            <span>Ref: 559012</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-lg font-extrabold text-red-400">Crítico</p>
+                                    <p class="text-xs text-gray-500">Restam 2 unidades</p>
+                                </div>
+                            </div>
+                             <div class="flex items-center justify-between p-4 bg-dark-bg/80 rounded-lg border border-dark-border hover:border-brand-500 transition-all cursor-pointer">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-400/20 to-purple-600/20 text-purple-400 flex items-center justify-center"><i class="fas fa-trophy text-xl"></i></div>
+                                    <div>
+                                        <p class="text-base font-bold text-white">Top Vendedor: Ricardo</p>
+                                        <div class="flex items-center gap-2 text-xs text-gray-400 mt-1">
+                                            <span>Filial Norte</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-lg font-extrabold text-white">115% da Meta</p>
+                                    <p class="text-xs text-green-400">R$ 15.2k Vendas</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="integracao" class="py-24 relative z-10 overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-16" data-aos="fade-up">
+            <h2 class="text-brand-500 font-semibold tracking-wide uppercase text-sm mb-2">Conectividade Total</h2>
+            <h3 class="text-3xl md:text-4xl font-bold text-white mb-4">O Hub Central do Seu Ecossistema</h3>
+            <p class="text-gray-400 max-w-2xl mx-auto">O VYA Manager não trabalha sozinho. Ele se conecta nativamente às ferramentas que você já usa.</p>
+        </div>
+
+        <div class="relative max-w-4xl mx-auto h-[500px] md:h-[400px]" data-aos="zoom-in" data-aos-delay="200">
+            <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20">
+                <div class="w-32 h-32 glass-panel rounded-full flex items-center justify-center p-4 border-2 border-brand-500 shadow-[0_0_30px_rgba(99,102,241,0.3)] relative z-20 animate-pulse-slow">
+                    <img src="{{ url_for('static', filename='favicon.png') }}" 
+                        alt="VYA Core" 
+                        class="h-16 w-auto max-w-[80%] object-contain drop-shadow-[0_0_15px_rgba(99,102,241,0.5)]">
+                </div>
+                <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] border border-brand-500/10 rounded-full animate-spin-slow z-0"></div>
+                 <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[250px] h-[250px] border border-brand-500/20 rounded-full animate-spin-slow animation-delay-2000 z-0"></div>
+            </div>
+
+            <div class="absolute top-10 left-10 md:top-20 md:left-32 flex flex-col items-center gap-2 z-20 group">
+                <div class="w-16 h-16 glass-panel rounded-xl flex items-center justify-center text-blue-400 border border-dark-border group-hover:border-blue-400 transition-all shadow-lg">
+                    <i class="fas fa-database text-2xl"></i>
+                </div>
+                 <span class="text-sm text-gray-300 font-medium">SQL Server</span>
+                 <div class="hidden md:block absolute top-20 left-20 w-24 h-[2px] bg-gradient-to-r from-blue-400/50 to-transparent rotate-45 transform origin-top-left -z-10"></div>
+            </div>
+
+            <div class="absolute top-10 right-10 md:top-20 md:right-32 flex flex-col items-center gap-2 z-20 group">
+                <div class="w-16 h-16 glass-panel rounded-xl flex items-center justify-center text-green-400 border border-dark-border group-hover:border-green-400 transition-all shadow-lg">
+                    <i class="fab fa-whatsapp text-3xl"></i>
+                </div>
+                 <span class="text-sm text-gray-300 font-medium">WhatsApp API</span>
+                 <div class="hidden md:block absolute top-20 right-20 w-24 h-[2px] bg-gradient-to-l from-green-400/50 to-transparent -rotate-45 transform origin-top-right -z-10"></div>
+            </div>
+
+             <div class="absolute bottom-10 left-10 md:bottom-20 md:left-32 flex flex-col items-center gap-2 z-20 group">
+                <div class="w-16 h-16 glass-panel rounded-xl flex items-center justify-center text-green-600 border border-dark-border group-hover:border-green-600 transition-all shadow-lg">
+                    <i class="fas fa-file-excel text-2xl"></i>
+                </div>
+                 <span class="text-sm text-gray-300 font-medium">Exportação Excel</span>
+            </div>
+
+            <div class="absolute bottom-10 right-10 md:bottom-20 md:right-32 flex flex-col items-center gap-2 z-20 group">
+                <div class="w-16 h-16 glass-panel rounded-xl flex items-center justify-center text-purple-400 border border-dark-border group-hover:border-purple-400 transition-all shadow-lg">
+                    <i class="fas fa-brain text-2xl"></i>
+                </div>
+                 <span class="text-sm text-gray-300 font-medium">IA & Nuvem</span>
+            </div>
+        </div>
+    </section>
+
+    <section id="contato" class="py-24 relative overflow-hidden bg-dark-bg">
+        <div class="absolute inset-0 bg-brand-900/20 pointer-events-none"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-dark-bg via-dark-bg to-transparent pointer-events-none"></div>
+        
+        <div class="max-w-4xl mx-auto px-4 relative z-10 text-center" data-aos="zoom-in">
+            <h2 class="text-4xl md:text-5xl font-bold text-white mb-6">Pronto para transformar seu negócio?</h2>
+            <p class="text-xl text-gray-300 mb-10">
+                Junte-se a redes como <span class="text-brand-400 font-semibold">Empório Alex, Poderoso Timão, Águia Shoes e outros</span> que já utilizam o poder do VYA Manager.
+            </p>
+            
+            <form id="form-demo" class="max-w-md mx-auto space-y-4 glass-panel p-8 rounded-2xl border border-dark-border shadow-2xl">
+                <div>
+                    <input type="text" id="input-empresa" placeholder="Nome da sua Empresa" required 
+                           class="w-full bg-dark-bg border border-dark-border text-white px-4 py-3 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all placeholder-gray-500">
+                </div>
+                <div>
+                    <input type="email" id="input-email" placeholder="Seu melhor e-mail" required 
+                           class="w-full bg-dark-bg border border-dark-border text-white px-4 py-3 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all placeholder-gray-500">
+                </div>
+                <button type="submit" id="btn-agendar" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-4 rounded-lg shadow-lg transition-all transform hover:-translate-y-1 flex justify-center items-center gap-2">
+                    <span>Agendar Demonstração Gratuita</span>
+                </button>
+                <p class="text-xs text-gray-500 mt-4">Sem compromisso. Instalação remota ou presencial.</p>
+            </form>
+        </div>
+    </section>
+
+    <footer class="bg-dark-bg border-t border-dark-border py-12 relative z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="flex items-center gap-2">
+                <img src="{{ url_for('static', filename='brand.png') }}" 
+                    alt="VYA Manager Logo" 
+                    class="h-8 w-auto object-contain grayscale opacity-50 hover:opacity-100 hover:grayscale-0 transition-all">
+            </div>
+            <div class="text-gray-500 text-sm text-center md:text-right">
+                <p>&copy; 2026 Nextt Soluções. Todos os direitos reservados.</p>
+                <p class="mt-1">Feito com <i class="fas fa-code text-brand-500"></i> e Inteligência.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        // Inicializa Animações
+        AOS.init({
+            once: true,
+            offset: 100,
+            duration: 800,
+            easing: 'ease-out-cubic',
+        });
+
+        // Efeito de Scroll na Navbar
+        window.addEventListener('scroll', function() {
+            const nav = document.getElementById('navbar');
+            if (window.scrollY > 50) {
+                nav.classList.add('shadow-lg', 'bg-dark-bg/95');
+                nav.classList.remove('glass-panel');
+            } else {
+                nav.classList.remove('shadow-lg', 'bg-dark-bg/95');
+                nav.classList.add('glass-panel');
+            }
+        });
+
+        // Controle do Modal de Login
+        // Função para abrir/fechar modal com FOCO AUTOMÁTICO
+        function toggleLoginModal() {
+            const modal = document.getElementById('loginModal');
+            modal.classList.toggle('hidden');
+            
+            if (!modal.classList.contains('hidden')) {
+                document.body.style.overflow = 'hidden';
+                // Dá foco no email assim que o modal abre
+                setTimeout(() => document.getElementById('email').focus(), 50);
+            } else {
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        // Configuração da tecla ENTER (Adicione isso logo após as funções)
+        document.addEventListener("DOMContentLoaded", function() {
+            const inputs = [document.getElementById('email'), document.getElementById('password')];
+            
+            inputs.forEach(input => {
+                if (input) {
+                    input.addEventListener("keyup", function(event) {
+                        if (event.key === "Enter") {
+                            event.preventDefault();
+                            realizarLogin();
+                        }
+                    });
+                }
+            });
+        });
+
+        async function realizarLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const btn = document.querySelector('button[onclick="realizarLogin()"]');
+
+            try {
+                btn.innerText = "Verificando...";
+                
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email, password: password })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    window.location.href = "/dashboard"; // Redireciona via servidor
+                } else {
+                    alert('Acesso negado: ' + (data.error || 'Verifique seus dados'));
+                    btn.innerText = "Entrar no Sistema";
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Erro de conexão com o servidor.');
+                btn.innerText = "Entrar no Sistema";
+            }
+            document.addEventListener("DOMContentLoaded", function() {
+            const camposLogin = [document.getElementById('email'), document.getElementById('password')];
+            
+            camposLogin.forEach(campo => {
+                if (campo) {
+                    campo.addEventListener('keypress', function (e) {
+                        if (e.key === 'Enter') {
+                            e.preventDefault(); // Evita comportamento padrão se houver form
+                            realizarLogin();    // Chama a função de login
+                        }
+                    });
+                }
+            });
+        });
+        }
+
+        // Função para Buscar o Changelog do GitHub
+        async function fetchChangelog() {
+            const element = document.getElementById('dynamic-changelog');
+            // Ajustei a URL (removi 'refs/heads' que as vezes quebra links raw)
+            const url = 'https://raw.githubusercontent.com/richardhhartmann/AutoNextt-Atualizador/main/versao.txt';
+            
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+                
+                const text = await response.text();
+                // console.log("Conteúdo baixado:", text); // Descomente para debug se precisar
+                
+                const lines = text.split('\n');
+                let version = '';
+                let firstChange = '';
+
+                lines.forEach(line => {
+                    // Limpa espaços e converte para minúsculo para comparar
+                    const cleanLine = line.trim();
+                    
+                    if (cleanLine.startsWith('version=')) {
+                        version = cleanLine.split('=')[1].trim();
+                    }
+                    if (cleanLine.startsWith('changelog=')) {
+                        const changesFull = cleanLine.substring(cleanLine.indexOf('=') + 1);
+                        firstChange = changesFull.split(';')[0].trim();
+                    }
+                });
+
+                if (version && firstChange) {
+                    element.innerHTML = `🚀 Versão ${version} Disponível: ${firstChange}`;
+                    element.classList.remove('animate-pulse-slow');
+                } else {
+                    // Se baixou mas não achou os dados, mostra erro no console mas mantém visual limpo
+                    console.error("Arquivo baixado mas formato inválido/incompleto");
+                    throw new Error('Dados incompletos no arquivo');
+                }
+
+            } catch (error) {
+                console.error('Erro Changelog:', error);
+                // Fallback visual
+                element.innerHTML = `🚀 VYA Manager: Sistema Inteligente`;
+                element.classList.remove('animate-pulse-slow');
+            }
+        }
+
+        // Carrega o changelog quando a página estiver pronta
+        window.addEventListener('DOMContentLoaded', fetchChangelog);
+        const formDemo = document.getElementById('form-demo');
+        if (formDemo) {
+            formDemo.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const empresaInput = document.getElementById('input-empresa');
+                const emailInput = document.getElementById('input-email');
+                const btn = document.getElementById('btn-agendar');
+                const originalText = btn.innerHTML;
+
+                // Bloqueia botão e mostra loading
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Enviando...';
+
+                try {
+                    const response = await fetch('/api/agendar-demo', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            empresa: empresaInput.value,
+                            email: emailInput.value
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        // Sucesso
+                        btn.innerHTML = '<i class="fas fa-check"></i> Recebido!';
+                        btn.classList.remove('bg-brand-600', 'hover:bg-brand-700');
+                        btn.classList.add('bg-green-600', 'hover:bg-green-700');
+                        
+                        alert('Sucesso! Recebemos sua solicitação e entraremos em contato em breve.');
+                        formDemo.reset();
+
+                        // Restaura o botão após 3 segundos
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                            btn.disabled = false;
+                            btn.classList.add('bg-brand-600', 'hover:bg-brand-700');
+                            btn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                        }, 3000);
+                    } else {
+                        throw new Error(result.error || 'Erro ao enviar');
+                    }
+                } catch (error) {
+                    console.error(error);
+                    alert('Erro ao enviar solicitação. Tente novamente ou contate via WhatsApp.');
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            });
+        }
+    </script>
+</body>
+</html>

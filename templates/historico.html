@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Histórico - {{ maquina }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="history-page">
+    <div class="container">
+        <a href="{{ url_for('dashboard') }}" class="back-link"><i class="fas fa-arrow-left"></i> Voltar ao Painel</a>
+        <h1>Histórico para <i class="fas fa-desktop"></i> {{ maquina }}</h1>
+
+        <div class="history-grid">
+            <div class="history-card">
+                <h2><i class="fas fa-history"></i> Últimas Sessões</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Início</th>
+                            <th>Fim</th>
+                            <th>Duração</th>
+                            <th>Versão</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sessao in sessoes %}
+                        <tr>
+                            <td>{{ sessao.inicio }}</td>
+                            <td>{{ sessao.fim }}</td>
+                            <td>{{ sessao.duracao }}</td>
+                            <td><span class="version-badge-sm">{{ sessao.versao }}</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="history-card">
+                <h2><i class="fas fa-code-branch"></i> Histórico de Versões</h2>
+                <table>
+                     <thead>
+                        <tr>
+                            <th>Data da Mudança</th>
+                            <th>Nova Versão</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for v in versoes %}
+                        <tr>
+                            <td>{{ v.data.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td><span class="version-badge">{{ v.versao }}</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

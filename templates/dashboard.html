@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Monitoramento - VYA Manager</title>
+    <link rel="icon" href="https://www.nextt.com.br/wp-content/uploads/2023/08/cropped-favicon-32x32.png" type="image/png">
+    <meta http-equiv="refresh" content="60">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="dark-mode">
+    <script>
+        const DASHBOARD_DATA = {
+            total_online: {{ total_online }},
+            total_clientes: {{ total_clientes }}
+        };
+    </script>
+
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="brand-area">
+                    <h1><i class="fas fa-network-wired"></i> Painel VYA Manager</h1>
+                </div>
+
+                <div class="app-version-badge" id="version-badge">
+                    <i class="fas fa-rocket"></i>
+                    <div class="version-text-group">
+                        <span class="v-label">Versão Mais Recente</span>
+                        <span class="v-number" id="global-version-number">...</span>
+                    </div>
+                </div>
+
+                <div class="theme-switcher">
+                    <i class="fas fa-sun"></i>
+                    <label class="switch">
+                        <input type="checkbox" id="theme-toggle" checked>
+                        <span class="slider round"></span>
+                    </label>
+                    <i class="fas fa-moon"></i>
+                </div>
+
+                <a href="{{ url_for('logout') }}" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> 
+                    <span class="logout-text">Sair</span>
+                </a>
+            </div>
+            <div class="summary">
+                <p>Status atualizado em {{ agora }}</p>
+                <div class="status-summary">
+                    <span class="dot"></span> <strong>{{ total_online }}</strong> Online / <strong>{{ total_clientes }}</strong> Clientes
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+
+        <div class="controls-bar">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="search-input" placeholder="Buscar por nome original ou apelido...">
+            </div>
+            <div class="sort-box">
+                <select id="sort-select" title="Ordenar por">
+                    <option value="name-asc">Nome (A-Z)</option>
+                    <option value="status">Status</option>
+                </select>
+            </div>
+            <div class="version-filter-box">
+                 <select id="version-filter-select" title="Filtrar por versão">
+                    <option value="all">Todas as Versões</option>
+                    {% for versao in versoes_disponiveis %}
+                    <option value="{{ versao }}">{{ versao }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="card-grid" id="card-grid">
+            {% for cliente in clientes %}
+            <div class="card status-{{ cliente.status_class }} client-card"
+                data-ip="{{ cliente.ip }}"
+                data-version="{{ cliente.versao }}"
+                data-domain="{{ cliente.domain }}" 
+                data-maquina="{{ cliente.maquina }}"  
+                data-status-order="{{ cliente.status_order }}">
+                
+                <div class="card-header">
+                    <div class="card-top-row">
+                        <div class="card-header-actions">
+                            {% if cliente.maquina not in ['ÁGUIA SHOES I', 'DellFiori'] %}
+                            <div class="service-controls">
+                                <button class="action-btn service-btn" 
+                                    data-action="{{ 'start' if cliente.status_sessao == 'paused' else 'stop' }}"
+                                    title="{{ 'Retomar Serviço' if cliente.status_sessao == 'paused' else 'Pausar Serviço' }}">
+                                    <i class="fas {{ 'fa-play' if cliente.status_sessao == 'paused' else 'fa-pause' }}"></i>
+                                </button>
+                                <button class="action-btn service-btn warning" 
+                                    data-action="restart" 
+                                    title="Reiniciar Serviço">
+                                    <i class="fas fa-sync-alt"></i>
+                                </button>
+                            </div>
+                            {% endif %}
+                            <span class="status-badge">{{ cliente.status_text }}</span>
+                        </div>
+                    </div>
+                    <div class="card-bottom-row">
+                        <div class="client-name-wrapper">
+                            <i class="fas fa-desktop"></i>
+                            <h2 class="maquina-nome-display">{{ cliente.empresa_display }}</h2>
+                            <button class="action-btn rename-btn" title="Renomear cliente (localmente)"><i class="fas fa-pencil-alt"></i></button>
+                        </div>
+                        <div class="version-info">
+                            <span class="version-badge">{{ cliente.versao }}</span>
+                            <i class="fas fa-arrow-alt-circle-up update-available-icon" style="display: none;" title="Atualização disponível"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="info-item">
+                        <span class="info-label"><i class="fas fa-server"></i> Servidor</span>
+                        <span class="info-value">{{ cliente.servidor }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label"><i class="fas fa-network-wired"></i> IP Local</span>
+                        <span class="info-value">
+                            {{ cliente.ip }}
+                        </span>
+                    </div>
+
+                    {% if cliente.domain %}
+                    <div class="info-item https-status-row">
+                        <span class="info-label"><i class="fas fa-globe"></i> HTTPS</span>
+                        <span class="info-value">
+                            <i class="fas fa-circle-notch fa-spin https-check-icon" title="Verificando..."></i>
+                            <span class="https-status-text" style="font-size: 0.9em;">Verificando...</span>
+                        </span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="card-footer">
+                    <span><i class="fas fa-heart-pulse"></i> {{ cliente.ultimo_heartbeat }}</span>
+                    <div class="card-actions">
+                        <button class="action-btn feedback-notification-btn" title="Novo feedback recebido!" style="display: none;">
+                            <i class="fas fa-bell"></i>
+                        </button>
+                        <button class="action-btn comment-btn" title="Adicionar Anotações"><i class="fas fa-comment-dots"></i></button>
+
+                        <button class="action-btn view-feedback-history-btn" title="Ver Histórico de Feedback">
+                            <i class="fas fa-star-half-alt"></i>
+                        </button>
+                        <button class="action-btn delete-btn" title="Excluir Cliente"><i class="fas fa-trash-alt"></i></button>
+
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <p class="no-clients">Nenhum cliente está sendo monitorado no momento.</p>
+            {% endfor %}
+        </div>
+    </main>
+    
+    <div id="comment-modal" class="modal-backdrop">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">Anotações para Cliente</h2>
+                <button id="modal-close-btn">&times;</button>
+            </div>
+            <textarea id="comment-textarea" placeholder="Digite suas anotações aqui..."></textarea>
+            <div class="modal-footer">
+                <button id="modal-cancel-btn" class="modal-btn">Cancelar</button>
+                <button id="modal-save-btn" class="modal-btn">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-feedback-modal" class="modal-backdrop">
+    <div class="modal-content" style="max-width: 600px;"> <div class="modal-header">
+            <h2 id="view-feedback-modal-title" class="text-lg font-bold">Histórico de Feedback</h2>
+            <button id="view-feedback-close-btn" class="text-xl font-bold">&times;</button>
+        </div>
+        
+        <div id="view-feedback-list-container" class="my-4 space-y-4 max-h-[60vh] overflow-y-auto p-2 border-y dark:border-gray-600">
+            <p id="view-feedback-loader" class="text-center p-4">Carregando histórico...</p>
+        </div>
+
+        <div class="modal-footer">
+            <button id="view-feedback-ok-btn" class="modal-btn" style="background-color: var(--color-header); color: white;">Fechar</button>
+        </div>
+    </div>
+</div>
+
+    <script src="{{ url_for('static', filename='dashboard.js') }}"></script>
+</body>
+</html>
