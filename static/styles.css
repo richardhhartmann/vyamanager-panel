@@ -650,3 +650,162 @@ body.dark-mode .version-badge {
         box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
     }
 }
+
+/* --- LAYOUT MOBILE E RESPONSIVO (Adicione ao final do styles.css) --- */
+
+@media (max-width: 1024px) {
+    /* Ajuste para Tablets: 2 colunas */
+    .card-grid {
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 16px;
+    }
+
+    /* --- Header Mobile --- */
+    header {
+        padding: 12px 0;
+    }
+    
+    header .header-content {
+        flex-direction: column;
+        align-items: stretch; /* Ocupa largura total */
+        gap: 16px;
+    }
+
+    /* Primeira linha: Logo e Menu Logout */
+    .brand-area {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        text-align: center;
+    }
+    
+    header h1 {
+        font-size: 1.4em;
+    }
+
+    /* Badge de versão mais compacto */
+    .app-version-badge {
+        justify-content: center;
+        padding: 6px 12px;
+    }
+    .version-text-group {
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+    }
+    .app-version-badge .v-label {
+        display: none; /* Esconde o texto "Versão Mais Recente" no mobile */
+    }
+    .app-version-badge .v-number::before {
+        content: "v";
+    }
+
+    /* Controles de Tema e Logout em linha */
+    .header-controls-group {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        margin-top: 8px;
+    }
+    
+    /* Move o theme-switcher e logout para ficarem lado a lado */
+    .theme-switcher {
+        justify-content: center;
+        flex-grow: 1;
+    }
+    
+    .logout-btn {
+        width: 100%;
+        justify-content: center;
+        margin-top: 10px;
+    }
+
+    .summary {
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        text-align: center;
+        font-size: 0.85em;
+    }
+
+    /* --- Barra de Controles (Search/Filter) --- */
+    .controls-bar {
+        grid-template-columns: 1fr; /* Pilha vertical */
+        gap: 12px;
+        padding: 12px;
+    }
+    
+    #search-input, #sort-select, #version-filter-select {
+        width: 100%;
+        font-size: 16px; /* Evita zoom automático no iOS */
+    }
+    
+    /* --- Cards no Mobile --- */
+    .card-grid {
+        grid-template-columns: 1fr; /* 1 coluna única */
+        gap: 16px;
+    }
+
+    .card {
+        min-width: 0; /* Evita overflow */
+    }
+
+    /* Cabeçalho do Card ajustado */
+    .card-header {
+        padding: 12px 16px;
+    }
+
+    .card-bottom-row {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .client-name-wrapper h2 {
+        font-size: 1.1em;
+        white-space: normal; /* Permite quebrar linha se o nome for longo */
+        word-break: break-word;
+    }
+
+    /* Botões de Serviço Maiores para Toque */
+    .service-controls .action-btn {
+        width: 40px;
+        height: 40px;
+    }
+
+    /* Badge de Versão no Card */
+    .version-badge {
+        font-size: 0.9em;
+        padding: 4px 12px;
+    }
+
+    /* Rodapé do Card */
+    .card-footer {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+    }
+    
+    .card-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .action-btn {
+        width: 44px; /* Touch target maior */
+        height: 44px;
+    }
+
+    /* --- Modais --- */
+    .modal-content {
+        width: 95%;
+        padding: 16px;
+        max-height: 85vh;
+        overflow-y: auto;
+    }
+}

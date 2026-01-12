@@ -739,7 +739,9 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(checkForFeedback, 45000); // Verifica a cada 45 segundos
     
     // --- FUNÇÕES DE INICIALIZAÇÃO ---
-    applyTheme(localStorage.getItem('darkMode') === 'true');
+    const savedTheme = localStorage.getItem('darkMode');
+    const isDark = savedTheme === null ? true : savedTheme === 'true';
+    applyTheme(isDark);
     loadAndApplyLocalData();
     applyFiltersAndSort();
     updatePageTitle();

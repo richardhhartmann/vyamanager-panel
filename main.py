@@ -1,3 +1,6 @@
+#pyinstaller --noconfirm --onefile --windowed --name "VyaManagerPanel" --add-data "templates;templates" --add-data "static;static" --icon "static/favicon.png" main.py
+
+import sys
 import os
 import psycopg2
 import datetime
@@ -9,11 +12,22 @@ from email.mime.multipart import MIMEMultipart
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from dotenv import load_dotenv
 
-load_dotenv()
+def resource_path(relative_path):
+    """ Retorna o caminho absoluto, seja rodando como script ou como .exe """
+    if hasattr(sys, '_MEIPASS'):
+        return os.path.join(sys._MEIPASS, relative_path)
+    return os.path.join(os.path.abspath("."), relative_path)
 
-app = Flask(__name__)
+if hasattr(sys, '_MEIPASS'):
+    app = Flask(__name__, 
+                template_folder=os.path.join(sys._MEIPASS, 'templates'),
+                static_folder=os.path.join(sys._MEIPASS, 'static'))
+else:
+    app = Flask(__name__)
 
 app.secret_key = 'chave_super_secreta'
+
+USUARIOS_PERMITIDOS = ["vanderlei", "brunog", "erison"]
 
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
@@ -37,7 +51,15 @@ DOMAIN_MAP = {
     "104.234.235.106": "https://victoraces.vyamanager.com.br"
 }
 
-NICKNAMES_FILE = 'apelidos.json'
+if getattr(sys, 'frozen', False):
+    BASE_DIR = os.path.dirname(sys.executable)
+else:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+NICKNAMES_FILE = os.path.join(BASE_DIR, 'apelidos.json')
+DOTENV_PATH = os.path.join(BASE_DIR, '.env')
+
+load_dotenv(DOTENV_PATH)
 
 def get_db_connection():
     """Cria uma conexão com o banco de dados PRINCIPAL."""
@@ -48,7 +70,6 @@ def get_db_connection():
     )
     return conn
 
-# --- NOVA FUNÇÃO DE CONEXÃO ADICIONADA AQUI ---
 def conectar_feedback_db():
     """Cria uma conexão com o banco de dados de FEEDBACK PostgreSQL em nuvem."""
     try:
@@ -82,7 +103,6 @@ def save_nickname(maquina, novo_nome):
     if novo_nome and novo_nome.strip():
         data[maquina] = novo_nome.strip()
     else:
-        # Se o nome estiver vazio, removemos o apelido (volta ao original)
         if maquina in data:
             del data[maquina]
             
@@ -91,26 +111,99 @@ def save_nickname(maquina, novo_nome):
 
 @app.route('/')
 def index():
-    # Se o usuário já estiver logado, redireciona direto pro dashboard
     if session.get('logged_in'):
         return redirect(url_for('dashboard'))
     
-    # Renderiza a página de vendas (Salve o HTML anterior como index.html na pasta templates)
     return render_template('index.html')
 
 @app.route('/api/login', methods=['POST'])
 def login():
     data = request.get_json()
-    usuario = data.get('email')
-    senha = data.get('password')
+    usuario_input = data.get('email')
+    senha_input = data.get('password')
 
-    # Validação simples (Pode ser substituída por consulta ao banco depois)
-    if usuario == 'richard' and senha == '1105':
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({'success': False, 'error': 'Erro de conexão com banco'}), 500
+    
+    try:
+        cur = conn.cursor()
+        
+        cur.execute("SELECT id, usu_login, usu_senha FROM autonextt.usuarios_dashboard WHERE usu_login = %s", (usuario_input,))
+        user_db = cur.fetchone()
+        
+        if user_db:
+            user_id, login_db, senha_db = user_db
+            
+            if senha_db == senha_input:
+                session['logged_in'] = True
+                session['user'] = login_db
+                return jsonify({'success': True, 'redirect': url_for('dashboard')})
+            else:
+                return jsonify({'success': False, 'error': 'Senha incorreta'}), 401
+
+        elif usuario_input in USUARIOS_PERMITIDOS:
+            if not senha_input:
+                return jsonify({
+                    'success': False, 
+                    'require_setup': True, 
+                    'message': 'Criação de senha necessária'
+                })
+            else:
+                return jsonify({'success': False, 'error': 'Usuário reconhecido. Deixe a senha em branco para iniciar.'}), 401
+
+        else:
+            if usuario_input == 'richard' and senha_input == '1105':
+                session['logged_in'] = True
+                session['user'] = usuario_input
+                return jsonify({'success': True, 'redirect': url_for('dashboard')})
+            
+            return jsonify({'success': False, 'error': 'Usuário não encontrado'}), 401
+
+    except Exception as e:
+        print(f"Erro login: {e}")
+        return jsonify({'success': False, 'error': 'Erro interno'}), 500
+    finally:
+        if conn: conn.close()
+
+@app.route('/api/criar-senha', methods=['POST'])
+def criar_senha():
+    data = request.get_json()
+    usuario = data.get('email')
+    nova_senha = data.get('new_password')
+    
+    if not usuario or not nova_senha:
+        return jsonify({'success': False, 'error': 'Dados incompletos'}), 400
+        
+    if usuario not in USUARIOS_PERMITIDOS:
+        return jsonify({'success': False, 'error': 'Não autorizado.'}), 403
+
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor()
+        
+        cur.execute("SELECT 1 FROM autonextt.usuarios_dashboard WHERE usu_login = %s", (usuario,))
+        if cur.fetchone():
+            return jsonify({'success': False, 'error': 'Usuário já cadastrado.'}), 400
+
+        cur.execute("""
+            INSERT INTO autonextt.usuarios_dashboard (usu_login, usu_senha, usu_altera_senha)
+            VALUES (%s, %s, FALSE)
+        """, (usuario, nova_senha))
+        
+        conn.commit()
+        
         session['logged_in'] = True
         session['user'] = usuario
-        return jsonify({'success': True})
-    else:
-        return jsonify({'success': False, 'error': 'Credenciais inválidas'}), 401
+        
+        return jsonify({'success': True, 'redirect': url_for('dashboard')})
+
+    except Exception as e:
+        if conn: conn.rollback()
+        print(f"Erro ao criar senha: {e}")
+        return jsonify({'success': False, 'error': 'Erro ao salvar no banco'}), 500
+    finally:
+        if conn: conn.close()
 
 @app.route('/logout')
 def logout():
@@ -121,7 +214,7 @@ def logout():
 def agendar_demo():
     data = request.json
     empresa = data.get('empresa')
-    email_cliente = data.get('email')
+    email_cliente = data.get('usuario')
 
     if not empresa or not email_cliente:
         return jsonify({'error': 'Preencha todos os campos'}), 400
@@ -163,8 +256,15 @@ def dashboard():
     try:
         cur = conn.cursor()
 
-        # Carregar Apelidos
         apelidos = {}
+
+        if os.path.exists(NICKNAMES_FILE): # Usa a variável global corrigida
+            try:
+                with open(NICKNAMES_FILE, 'r', encoding='utf-8') as f:
+                    apelidos = json.load(f)
+            except Exception as e:
+                print(f"Erro ao ler apelidos: {e}")
+
         caminho_apelidos = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'apelidos.json')
         if os.path.exists(caminho_apelidos):
             try:
@@ -173,7 +273,6 @@ def dashboard():
             except Exception as e:
                 print(f"Erro ao ler apelidos: {e}")
 
-        # Query
         cur.execute("""
             SELECT DISTINCT ON (s.maquina_local) 
                 s.maquina_local as maquina, 
@@ -199,13 +298,11 @@ def dashboard():
             maquina_id = cliente['maquina']
             ip_local = cliente.get('ip_local')
             
-            # 1. Apelido / Nome Display
             display_name = apelidos.get(maquina_id, maquina_id)
             cliente['display_name'] = display_name
             cliente['empresa_display'] = display_name 
             cliente['servidor'] = display_name # Preenche o campo 'Servidor' no card
 
-            # 2. Link do Sistema (Domínio vs IP)
             domain_url = None
             if ip_local and ip_local in DOMAIN_MAP:
                 domain_url = DOMAIN_MAP[ip_local]
@@ -217,15 +314,11 @@ def dashboard():
                 cliente['link_sistema'] = f"http://{ip_local}:8000" if ip_local else "#"
                 cliente['domain'] = None
 
-            # 3. IPs
             cliente['ip'] = ip_local 
             cliente['ip_local'] = ip_local
 
-            # --- CORREÇÃO DA VERSÃO AQUI ---
-            # O banco retorna 'versao_app', mas o HTML pede 'versao'
             cliente['versao'] = cliente.get('versao_app') or 'v0.0.0'
 
-            # 4. Formatação de Datas
             if cliente.get('inicio_sessao'):
                 dt = cliente['inicio_sessao'] - datetime.timedelta(hours=3)
                 cliente['inicio_sessao_fmt'] = dt.strftime('%d/%m %H:%M')
@@ -238,14 +331,12 @@ def dashboard():
             else:
                 cliente['ultimo_heartbeat'] = "S/ Inf."
 
-            # 5. Status
             status_banco = cliente.get('status_sessao', 'offline')
             cliente['status_class'] = 'online' if status_banco == 'online' else 'offline'
             cliente['status_text'] = status_banco.upper()
             
             clientes_processados.append(cliente)
 
-        # Ordenação
         clientes_processados.sort(key=lambda x: (x['comandos_pendentes'] > 0, x['status_sessao'] == 'online'), reverse=True)
 
         total_online = sum(1 for c in clientes_processados if c['status_sessao'] == 'online')
@@ -253,7 +344,6 @@ def dashboard():
 
         cur.close()
 
-        # Passamos versoes_disponiveis vazio ou calculamos se quiser filtrar depois
         return render_template('dashboard.html', 
                              clientes=clientes_processados, 
                              total_online=total_online,
@@ -283,13 +373,11 @@ def api_renomear():
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
-# --- ROTA DE FEEDBACK CORRIGIDA ---
 @app.route('/api/feedback/check', methods=['POST'])
 def check_feedback():
     """Verifica se há novos feedbacks para uma lista de clientes."""
     data = request.get_json()
     client_names = data.get('clients', [])
-    # O 'last_check' não será mais usado aqui, mas mantemos para compatibilidade
     last_check_timestamp = data.get('last_check') 
 
     if not client_names:
@@ -303,7 +391,6 @@ def check_feedback():
 
         cur = conn.cursor()
         
-        # MODIFICADO: A query agora busca também os placeholders
         sql = """
             SELECT DISTINCT ON (nome_empresa)
                 nome_empresa, rating, comentario, data_envio, placeholders_selecionados
@@ -312,7 +399,6 @@ def check_feedback():
             ORDER BY nome_empresa, data_envio DESC;
         """
         
-        # MODIFICADO: O timestamp não é mais usado para filtrar
         cur.execute(sql, (client_names,))
         
         new_feedbacks = {}
@@ -348,7 +434,6 @@ def feedback_history(maquina):
             return jsonify({"error": "Falha na conexão com o serviço de feedback"}), 500
         
         cur = conn.cursor()
-        # MODIFICADO: A query agora também seleciona o 'nome_usuario'
         sql = """
             SELECT rating, comentario, data_envio, placeholders_selecionados, nome_usuario
             FROM autonextt.feedback_avaliacoes
@@ -539,7 +624,6 @@ def enviar_comando_remoto():
         conn = get_db_connection()
         cur = conn.cursor()
         
-        # Insere o comando na "Caixa Postal" do banco
         cur.execute("""
             INSERT INTO autonextt.comandos_remotos (comando, alvo_maquina, status)
             VALUES (%s, %s, 'PENDING')

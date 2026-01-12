@@ -1,4 +1,3 @@
-# notificador.py (Versão Final com Funções de E-mail)
 
 import os
 import psycopg2
@@ -50,7 +49,6 @@ def get_config_e_emails(cursor, maquina):
     
     return list(recipients), pausado
 
-# --- NOVA FUNÇÃO DE E-MAIL DE ATUALIZAÇÃO ---
 def send_update_email(nova_versao, changelog, maquina, recipients):
     """Envia um e-mail notificando sobre uma nova versão."""
     sender_email = os.getenv('EMAIL_SENDER')
@@ -84,7 +82,6 @@ def send_update_email(nova_versao, changelog, maquina, recipients):
     except Exception as e:
         print(f"Falha ao enviar e-mail de ATUALIZAÇÃO para {maquina}: {e}")
 
-# --- NOVA FUNÇÃO DE E-MAIL DE ALERTA OFFLINE ---
 def send_offline_email(maquina, ultimo_heartbeat, recipients):
     """Envia um e-mail de alerta quando um cliente fica sem resposta."""
     sender_email = os.getenv('EMAIL_SENDER')
@@ -152,13 +149,11 @@ def main():
             print(f"-> Ignorando {maquina}: notificações pausadas.")
             continue
 
-        # Lógica de Alerta de Atualização
         versao_antiga = versoes_ontem.get(maquina)
         if versao_hoje and versao_hoje != versao_antiga:
             print(f"ALERTA DE UPDATE para {maquina}: de {versao_antiga or 'N/A'} para {versao_hoje}")
             send_update_email(versao_hoje, changelog_texto, maquina, recipients)
         
-        # Lógica de Alerta de Offline
         if status_sessao == 'online' and ultimo_heartbeat:
             diferenca = datetime.datetime.now(datetime.timezone.utc) - ultimo_heartbeat
             if diferenca.total_seconds() > OFFLINE_THRESHOLD_MINUTES * 60:
