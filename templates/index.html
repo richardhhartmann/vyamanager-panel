@@ -190,9 +190,16 @@
                             <button onclick="toggleLoginModal()" class="text-white hover:text-brand-400 transition-colors text-sm font-medium flex items-center gap-2">
                                 <i class="fas fa-sign-in-alt"></i> Painel
                             </button>
+                            
                             <a href="#contato" class="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2.5 rounded-full text-sm font-medium transition-all shadow-lg shadow-brand-600/30 hover:shadow-brand-600/50">
                                 Solicitar Demo
                             </a>
+
+                            {% if client_url %}
+                            <a href="{{ client_url }}" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-full text-sm font-medium transition-all shadow-lg shadow-green-600/30 hover:shadow-green-600/50 flex items-center gap-2 animate-pulse-slow">
+                                <i class="fas fa-external-link-alt"></i> Acessar Página
+                            </a>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -212,9 +219,17 @@
                 <a href="#integracao" onclick="toggleMobileMenu()" class="block px-3 py-3 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-gray-700">Integrações</a>
                 
                 <div class="border-t border-gray-700 pt-4 mt-4">
+                    
+                    {% if client_url %}
+                    <a href="{{ client_url }}" class="block w-full text-center px-5 py-3 rounded-lg text-base font-medium bg-green-600 text-white hover:bg-green-700 mb-2">
+                        <i class="fas fa-external-link-alt mr-2"></i> Acessar Minha Página
+                    </a>
+                    {% endif %}
+
                     <button onclick="toggleLoginModal(); toggleMobileMenu()" class="w-full text-left block px-3 py-3 rounded-md text-base font-medium text-white bg-gray-800 hover:bg-gray-700 mb-2">
                         <i class="fas fa-sign-in-alt mr-2"></i> Acessar Painel
                     </button>
+                    
                     <a href="#contato" onclick="toggleMobileMenu()" class="block w-full text-center px-5 py-3 rounded-lg text-base font-medium bg-brand-600 text-white hover:bg-brand-700">
                         Solicitar Demonstração
                     </a>

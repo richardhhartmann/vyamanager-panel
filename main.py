@@ -114,7 +114,17 @@ def index():
     if session.get('logged_in'):
         return redirect(url_for('dashboard'))
     
-    return render_template('index.html')
+    if request.headers.getlist("X-Forwarded-For"):
+        user_ip = request.headers.getlist("X-Forwarded-For")[0]
+    else:
+        user_ip = request.remote_addr
+
+    client_url = None
+
+    if user_ip in DOMAIN_MAP:
+        client_url = DOMAIN_MAP[user_ip]
+
+    return render_template('index.html', client_url=client_url)
 
 @app.route('/api/login', methods=['POST'])
 def login():
